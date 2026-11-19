@@ -725,11 +725,11 @@
       const front = frontPct();
       for (const s of slices) {
         const d = front - (dir > 0 ? s.xc : 100 - s.xc); // how far behind the front this slice is
-        if (d <= -3) {
+        if (d <= 0) {
           if (s.on) { s.el.style.transform = ""; s.shade.style.opacity = "0"; s.spec.style.opacity = "0"; s.on = false; }
           continue;
         }
-        const k = clamp((d + 3) / 30, 0, 1), e = k * k * (3 - 2 * k);
+        const k = clamp(d / 16, 0, 1), e = k * (2 - k); // lifts right behind the pointer
         const a = e * 68; // leans back, still visible as a bent flap
         s.el.style.transform = `translate3d(0, ${(-e * 14).toFixed(2)}px, 0) rotateX(${a.toFixed(2)}deg) rotateZ(${(-dir * e * 5).toFixed(2)}deg)`;
         s.shade.style.opacity = (e * 0.55).toFixed(3);
@@ -738,7 +738,7 @@
       }
       // the tear line: drawn up to the front, brighter and wider the faster you rip
       line.style.opacity = clamp(cur * 6, 0, 1).toFixed(3);
-      const off = String(100 - clamp(front + 1, 0, 100));
+      const off = String(100 - clamp(front, 0, 100));
       wide.style.strokeDashoffset = off; core.style.strokeDashoffset = off;
       wide.style.opacity = clamp(0.6 + heat * 0.4, 0, 1).toFixed(3);
       wide.style.strokeWidth = (9 + heat * 14).toFixed(1);
@@ -754,7 +754,8 @@
 
     const loop = () => {
       raf = 0;
-      cur += (target - cur) * (done ? 0.3 : drag ? 0.55 : 0.22); // tight to the finger, soft when let go
+      if (drag) cur = target; // exactly under the pointer
+      else cur += (target - cur) * (done ? 0.3 : 0.22); // eases only when let go or finishing
       heat += (heatT - heat) * 0.25; heatT *= drag ? 0.9 : 0.85;
       if (Math.abs(target - cur) < 0.0008) cur = target;
       render();
@@ -868,6 +869,7 @@
       const pr = pack.getBoundingClientRect();
       const xPct = ((e.clientX - pr.left) / pr.width) * 100;
       target = clamp(toProgress(dir > 0 ? xPct : 100 - xPct), 0, 1);
+      cur = target; render(); // draw now, not a frame later
       kick();
       if (target >= 0.95) finish();
     });
