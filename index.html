@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keycard — send a game</title>
+<meta name="description" content="Wrap a Steam key in a card with a note and send it to a friend as a link.">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f100d;
+    --ink-2: #171814;
+    --line: #2a2b25;
+    --paper: #ece7dc;
+    --muted: #8f8b80;
+    --accent: #ffb547;
+    --accent-ink: #1d1404;
+    --danger: #ff7a5c;
+    --radius: 14px;
+    --gutter: clamp(16px, 4vw, 48px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100dvh;
+    background: var(--ink);
+    color: var(--paper);
+    font: 400 16px/1.5 "Geist", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  [hidden] { display: none !important; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
+  header.top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 22px 0; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .mark { display: inline-flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+  .mark i { width: 18px; height: 12px; border-radius: 3px; background: var(--accent); display: inline-block; }
+  .top small { color: var(--muted); font-weight: 400; }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    appearance: none; border: 0; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    height: 48px; padding: 0 22px; border-radius: 999px;
+    font: 500 15px/1 "Geist", sans-serif; text-decoration: none;
+    background: var(--accent); color: var(--accent-ink);
+    transition: transform .18s ease, background-color .18s ease, box-shadow .18s ease;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px -8px rgba(255,181,71,.6); }
+  .btn:active { transform: translateY(1px) scale(.98); box-shadow: none; }
+  .btn.ghost { background: transparent; color: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+  .btn.ghost:hover { box-shadow: inset 0 0 0 1px var(--muted); }
+  .btn:focus-visible, .card:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px;
+  }
+
+  /* ---------- the card ---------- */
+  .card {
+    position: relative; width: 100%; max-width: 460px; aspect-ratio: 1.586;
+    border-radius: 20px; padding: 26px 28px;
+    background: #1b1c17;
+    box-shadow: inset 0 0 0 1px #34352d, 0 30px 60px -30px rgba(0,0,0,.8);
+    display: flex; flex-direction: column; justify-content: space-between;
+    overflow: hidden; color: var(--paper); text-align: left;
+    transition: transform .25s ease, box-shadow .25s ease;
+    user-select: none;
+  }
+  .card::before { /* foil band */
+    content: ""; position: absolute; left: 0; right: 0; top: 38%; height: 18%;
+    background: var(--accent); opacity: .92;
+  }
+  .card::after { /* sheen that follows the pointer */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(260px circle at var(--mx, 70%) var(--my, 20%), rgba(255,255,255,.09), transparent 60%);
+  }
+  .card > * { position: relative; z-index: 1; }
+  .card .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .card .label { font: 500 11px/1 "Geist Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .card .game { font: 400 clamp(22px, 5vw, 30px)/1.05 "Instrument Serif", serif; letter-spacing: -0.01em; max-width: 70%; overflow-wrap: anywhere; }
+  .card .code {
+    font: 500 clamp(15px, 3.6vw, 20px)/1.2 "Geist Mono", monospace; letter-spacing: .06em;
+    overflow-wrap: anywhere;
+  }
+  .card .hint { font-size: 12px; color: var(--muted); transition: color .2s; }
+  button.card { border: 0; cursor: copy; font: inherit; }
+  button.card:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px #45463c, 0 40px 70px -30px rgba(0,0,0,.9); }
+  button.card:active { transform: translateY(0) scale(.99); }
+  .card.copied .hint { color: var(--accent); }
+
+  /* ---------- create view ---------- */
+  .create { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 88px); align-items: start; padding: 40px 0 80px; }
+  .create h1 {
+    font: 400 clamp(44px, 7vw, 84px)/.95 "Instrument Serif", serif; letter-spacing: -0.02em; margin: 0 0 18px;
+  }
+  .create h1 em { color: var(--accent); }
+  .lede { color: var(--muted); max-width: 42ch; margin: 0 0 36px; }
+  form { display: grid; gap: 18px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+  label span.opt { color: #5f5c54; }
+  input, textarea {
+    width: 100%; background: var(--ink-2); color: var(--paper);
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+    font: 400 15px/1.4 "Geist", sans-serif; transition: border-color .15s;
+  }
+  input:hover, textarea:hover { border-color: #3d3e36; }
+  textarea { min-height: 110px; resize: vertical; }
+  input.mono { font-family: "Geist Mono", monospace; letter-spacing: .05em; text-transform: uppercase; }
+  .err { color: var(--danger); font-size: 13px; min-height: 1em; margin: -6px 0 0; }
+  .preview { position: sticky; top: 32px; display: grid; gap: 20px; justify-items: start; }
+  .preview .note {
+    font: italic 400 22px/1.35 "Instrument Serif", serif; color: var(--paper); max-width: 34ch;
+    white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.35em;
+  }
+  .preview .note:empty::before { content: "Your note shows here."; color: #5f5c54; }
+  .result { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--ink-2); width: 100%; max-width: 460px; }
+  .result output { font: 400 13px/1.4 "Geist Mono", monospace; color: var(--muted); overflow-wrap: anywhere; max-height: 4.2em; overflow: hidden; }
+  .result .acts { display: flex; flex-wrap: wrap; gap: 10px; }
+  .fine { font-size: 13px; color: #6d6a61; max-width: 46ch; }
+
+  /* ---------- gift view ---------- */
+  .gift { min-height: calc(100dvh - 80px); display: grid; place-items: center; padding: 24px 0 64px; }
+  .stage { width: 100%; max-width: 640px; display: grid; gap: 28px; justify-items: center; text-align: center; }
+  .eyebrow { font: 500 12px/1 "Geist Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .gift h1 { font: 400 clamp(40px, 8vw, 76px)/1 "Instrument Serif", serif; letter-spacing: -0.02em; margin: 0; overflow-wrap: anywhere; }
+  .gift h1 em { color: var(--accent); }
+  .gift .note {
+    font: italic 400 clamp(20px, 3.4vw, 26px)/1.4 "Instrument Serif", serif;
+    max-width: 36ch; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .gift .sig { color: var(--muted); margin-top: -14px; }
+  .gift .acts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .gift .card { margin: 8px auto 0; }
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0;
+    background: var(--paper); color: var(--ink); padding: 10px 16px; border-radius: 999px;
+    font-size: 14px; font-weight: 500; transition: opacity .2s, transform .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* entrance */
+  [data-enter] { animation: enter .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 90ms); }
+  @keyframes enter { from { opacity: 0; transform: translateY(14px); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  @media (max-width: 880px) {
+    .create { grid-template-columns: 1fr; }
+    .preview { position: static; }
+  }
+  @media (max-width: 480px) {
+    .pair { grid-template-columns: 1fr; }
+    .card { padding: 20px; border-radius: 16px; }
+    .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="mark" href="./"><i></i>Keycard</a>
+      <small id="topnote">Nothing is stored. The card lives in its link.</small>
+    </header>
+
+    <!-- ===================== create ===================== -->
+    <main id="create" class="create" hidden>
+      <section>
+        <h1 data-enter>Send a game,<br><em>with a note.</em></h1>
+        <p class="lede" data-enter style="--i:1">Paste a Steam key, write something to your friend, and send them the link. When they open it they see your message and the key on a card. One tap copies it, one more redeems it on Steam.</p>
+
+        <form id="form" novalidate data-enter style="--i:2">
+          <div class="pair">
+            <label>To <input name="to" maxlength="40" placeholder="Sam" autocomplete="off"></label>
+            <label>From <input name="from" maxlength="40" placeholder="You" autocomplete="off" required></label>
+          </div>
+          <label><span>Game <span class="opt">(optional)</span></span>
+            <input name="game" maxlength="60" placeholder="Outer Wilds" autocomplete="off">
+          </label>
+          <label>Steam key
+            <input name="key" class="mono" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false" required>
+          </label>
+          <label>Message
+            <textarea name="msg" maxlength="600" placeholder="Happy birthday. Clear your weekend."></textarea>
+          </label>
+          <p class="err" id="err" role="alert"></p>
+          <div><button class="btn" type="submit">Make the card</button></div>
+        </form>
+      </section>
+
+      <aside class="preview" aria-label="Preview">
+        <div class="card" id="pcard" data-enter style="--i:2">
+          <div class="row"><span class="game" id="pgame">A game for you</span><span class="label">Steam key</span></div>
+          <div></div>
+          <div class="row"><span class="code" id="pcode">XXXXX-XXXXX-XXXXX</span></div>
+        </div>
+        <p class="note" id="pnote" data-enter style="--i:3"></p>
+
+        <div class="result" id="result" hidden>
+          <span class="label" style="font:500 11px/1 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Your link</span>
+          <output id="link"></output>
+          <div class="acts">
+            <button class="btn" type="button" id="copylink">Copy link</button>
+            <button class="btn ghost" type="button" id="sharelink" hidden>Share…</button>
+            <a class="btn ghost" id="openlink" target="_blank" rel="noopener">Open it</a>
+          </div>
+        </div>
+        <p class="fine">The key is packed into the part of the link after the #, which browsers never send to a server. Anyone who has the link can read the key, so send it only to your friend.</p>
+      </aside>
+    </main>
+
+    <!-- ===================== gift ===================== -->
+    <main id="gift" class="gift" hidden>
+      <div class="stage">
+        <!-- closed -->
+        <div id="closed" class="stage">
+          <span class="eyebrow" data-enter>A gift for <span id="gto"></span></span>
+          <h1 data-enter style="--i:1"><span id="gfrom1"></span> sent you<br><em>a game.</em></h1>
+          <div data-enter style="--i:2"><button class="btn" id="open" type="button">Open it</button></div>
+        </div>
+        <!-- opened -->
+        <div id="opened" class="stage" hidden>
+          <p class="note" id="gnote" data-enter></p>
+          <p class="sig" id="gsig" data-enter style="--i:1"></p>
+          <button class="card" id="gcard" type="button" data-enter style="--i:2" aria-label="Copy Steam key">
+            <div class="row"><span class="game" id="ggame"></span><span class="label">Steam key</span></div>
+            <div></div>
+            <div class="row"><span class="code" id="gcode"></span><span class="hint" id="ghint">Tap to copy</span></div>
+          </button>
+          <div class="acts" data-enter style="--i:3">
+            <a class="btn" id="redeem" target="_blank" rel="noopener noreferrer">Redeem on Steam</a>
+            <a class="btn ghost" href="./">Send one back</a>
+          </div>
+          <p class="fine" data-enter style="--i:4">Redeem opens Steam's key page with the key filled in. Sign in, accept the agreement and press Continue.</p>
+        </div>
+        <!-- broken -->
+        <div id="broken" class="stage" hidden>
+          <h1>This link is <em>incomplete.</em></h1>
+          <p class="lede" style="margin:0 auto">Part of it was probably cut off when it was pasted. Ask your friend to send it again.</p>
+          <a class="btn ghost" href="./">Make your own</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  // ---- link encoding: UTF-8 JSON -> base64url, in the hash ----
+  const enc = (obj) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(obj));
+    let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b)));
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  };
+  const dec = (s) => {
+    const b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+    const bin = atob(b64 + "===".slice((b64.length + 3) % 4));
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
+  };
+
+  // Steam keys: 3 or 5 groups of 5 (A-Z, 0-9). Normalise spaces and lowercase.
+  const normKey = (k) => k.toUpperCase().replace(/[^A-Z0-9-]/g, "");
+  const validKey = (k) => /^[A-Z0-9]{5}(-[A-Z0-9]{5}){2}((-[A-Z0-9]{5}){2})?$/.test(k);
+  const redeemUrl = (k) => "https://store.steampowered.com/account/registerkey?key=" + encodeURIComponent(k);
+
+  const toast = (msg) => {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 1800);
+  };
+  const copy = async (text) => {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch {}
+      ta.remove(); return ok;
+    }
+  };
+  const sheen = (el) => el.addEventListener("pointermove", (e) => {
+    const r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
+    el.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
+  });
+
+  const hash = new URLSearchParams(location.hash.slice(1)).get("g");
+
+  // ===================== gift view =====================
+  if (hash !== null) {
+    $("gift").hidden = false;
+    $("topnote").textContent = "";
+    let g;
+    try {
+      g = dec(hash);
+      g.k = normKey(String(g.k || ""));
+      if (!validKey(g.k)) throw new Error("bad key");
+    } catch {
+      $("closed").hidden = true; $("broken").hidden = false; return;
+    }
+    const from = String(g.f || "A friend").slice(0, 40);
+    const to = String(g.t || "you").slice(0, 40);
+    document.title = from + " sent you a game";
+    $("gto").textContent = to;
+    $("gfrom1").textContent = from;
+    $("gnote").textContent = String(g.m || "Enjoy this one.").slice(0, 600);
+    $("gsig").textContent = "— " + from;
+    $("ggame").textContent = String(g.n || "A game for you").slice(0, 60);
+    $("gcode").textContent = g.k;
+    $("redeem").href = redeemUrl(g.k);
+
+    $("open").addEventListener("click", () => {
+      $("closed").hidden = true; $("opened").hidden = false; $("gcard").focus({ preventScroll: true });
+    });
+    const card = $("gcard"); sheen(card);
+    card.addEventListener("click", async () => {
+      const ok = await copy(g.k);
+      card.classList.toggle("copied", ok);
+      $("ghint").textContent = ok ? "Copied" : "Select and copy";
+      toast(ok ? "Key copied" : "Couldn't copy, select it by hand");
+      if (ok) setTimeout(() => { card.classList.remove("copied"); $("ghint").textContent = "Tap to copy"; }, 2200);
+    });
+    return;
+  }
+
+  // ===================== create view =====================
+  $("create").hidden = false;
+  const f = $("form");
+  sheen($("pcard"));
+  const render = () => {
+    $("pgame").textContent = f.game.value.trim() || "A game for you";
+    $("pcode").textContent = normKey(f.key.value) || "XXXXX-XXXXX-XXXXX";
+    $("pnote").textContent = f.msg.value.trim();
+    $("result").hidden = true;
+  };
+  f.addEventListener("input", render);
+
+  f.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const key = normKey(f.key.value);
+    const err = $("err");
+    if (!f.from.value.trim()) { err.textContent = "Add your name so they know who it's from."; f.from.focus(); return; }
+    if (!validKey(key)) { err.textContent = "That doesn't look like a Steam key. It should be like ABCDE-FGHIJ-KLMNO."; f.key.focus(); return; }
+    err.textContent = "";
+    const data = { f: f.from.value.trim(), t: f.to.value.trim(), n: f.game.value.trim(), m: f.msg.value.trim(), k: key };
+    const url = location.origin + location.pathname + "#g=" + enc(data);
+    $("link").textContent = url;
+    $("openlink").href = url;
+    $("result").hidden = false;
+    $("copylink").onclick = async () => toast((await copy(url)) ? "Link copied" : "Couldn't copy, select it by hand");
+    if (navigator.share) {
+      $("sharelink").hidden = false;
+      $("sharelink").onclick = () => navigator.share({ title: "A game for you", url }).catch(() => {});
+    }
+    $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  // reload into the right view if someone edits the hash by hand
+  addEventListener("hashchange", () => location.reload());
+})();
+</script>
+</body>
+</html>
