@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Keycard — send a game</title>
 <meta name="description" content="Wrap a Steam key in a card with a note and send it to a friend as a link.">
 <meta name="referrer" content="no-referrer">
@@ -16,6 +16,7 @@
     --line: #2a2b25;
     --paper: #ece7dc;
     --muted: #8f8b80;
+    --faint: #5f5c54;
     --accent: #ffb547;
     --accent-ink: #1d1404;
     --danger: #ff7a5c;
@@ -30,16 +31,18 @@
     color: var(--paper);
     font: 400 16px/1.5 "Geist", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
   [hidden] { display: none !important; }
   .wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
   header.top {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
     padding: 22px 0; font-weight: 600; letter-spacing: -0.01em;
   }
   .mark { display: inline-flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
   .mark i { width: 18px; height: 12px; border-radius: 3px; background: var(--accent); display: inline-block; }
-  .top small { color: var(--muted); font-weight: 400; }
+  .top small { color: var(--muted); font-weight: 400; text-align: right; }
+  .mono-label { font: 500 11px/1 "Geist Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
   /* ---------- buttons ---------- */
   .btn {
@@ -54,54 +57,57 @@
   .btn:active { transform: translateY(1px) scale(.98); box-shadow: none; }
   .btn.ghost { background: transparent; color: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
   .btn.ghost:hover { box-shadow: inset 0 0 0 1px var(--muted); }
-  .btn:focus-visible, .card:focus-visible, input:focus-visible, textarea:focus-visible {
-    outline: 2px solid var(--accent); outline-offset: 3px;
-  }
+  .linkish { appearance: none; background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .linkish:hover { color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
   /* ---------- the card ---------- */
   .card {
     position: relative; width: 100%; max-width: 460px; aspect-ratio: 1.586;
-    border-radius: 20px; padding: 26px 28px;
+    border-radius: 20px; padding: 24px 26px;
     background: #1b1c17;
     box-shadow: inset 0 0 0 1px #34352d, 0 30px 60px -30px rgba(0,0,0,.8);
     display: flex; flex-direction: column; justify-content: space-between;
     overflow: hidden; color: var(--paper); text-align: left;
-    transition: transform .25s ease, box-shadow .25s ease;
-    user-select: none;
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
+    transition: transform .2s ease-out, box-shadow .25s ease;
+    user-select: none; -webkit-user-select: none;
   }
-  .card::before { /* foil band */
-    content: ""; position: absolute; left: 0; right: 0; top: 38%; height: 18%;
-    background: var(--accent); opacity: .92;
+  .card .band { position: absolute; left: 0; right: 0; top: 38%; height: 18%; background: var(--accent); opacity: .92; }
+  .card .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .card .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(12,12,10,.94) 0, rgba(12,12,10,.75) 30%, transparent 62%), linear-gradient(to bottom, rgba(12,12,10,.55), transparent 30%); display: none; }
+  .card.has-art .band { display: none; }
+  .card.has-art .scrim { display: block; }
+  .card.has-art .game { visibility: hidden; }
+  .card .holo { /* light that follows the pointer */
+    position: absolute; inset: 0; pointer-events: none; z-index: 2; mix-blend-mode: soft-light;
+    background:
+      radial-gradient(280px circle at var(--mx, 70%) var(--my, 20%), rgba(255,255,255,.35), transparent 60%),
+      linear-gradient(115deg, transparent 30%, rgba(255,200,120,.25) 45%, rgba(140,220,255,.22) 55%, transparent 70%);
+    background-size: 100% 100%, 250% 250%;
+    background-position: 0 0, var(--mx, 50%) var(--my, 50%);
   }
-  .card::after { /* sheen that follows the pointer */
-    content: ""; position: absolute; inset: 0; pointer-events: none;
-    background: radial-gradient(260px circle at var(--mx, 70%) var(--my, 20%), rgba(255,255,255,.09), transparent 60%);
-  }
-  .card > * { position: relative; z-index: 1; }
-  .card .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .card .row { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
   .card .label { font: 500 11px/1 "Geist Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .card.has-art .label { color: var(--paper); background: rgba(12,12,10,.55); padding: 6px 8px; border-radius: 6px; backdrop-filter: blur(6px); }
   .card .game { font: 400 clamp(22px, 5vw, 30px)/1.05 "Instrument Serif", serif; letter-spacing: -0.01em; max-width: 70%; overflow-wrap: anywhere; }
-  .card .code {
-    font: 500 clamp(15px, 3.6vw, 20px)/1.2 "Geist Mono", monospace; letter-spacing: .06em;
-    overflow-wrap: anywhere;
-  }
-  .card .hint { font-size: 12px; color: var(--muted); transition: color .2s; }
-  button.card { border: 0; cursor: copy; font: inherit; }
-  button.card:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px #45463c, 0 40px 70px -30px rgba(0,0,0,.9); }
-  button.card:active { transform: translateY(0) scale(.99); }
+  .card .code { font: 500 clamp(15px, 3.6vw, 20px)/1.2 "Geist Mono", monospace; letter-spacing: .06em; overflow-wrap: anywhere; }
+  .card .hint { font-size: 12px; color: var(--muted); transition: color .2s; white-space: nowrap; }
+  .card.has-art .hint { color: #c9c3b6; }
+  button.card { border: 0; cursor: copy; font: inherit; touch-action: pan-y; }
+  button.card:hover { --lift: -2px; box-shadow: inset 0 0 0 1px #45463c, 0 40px 70px -30px rgba(0,0,0,.9); }
+  button.card:active { --lift: 0px; }
   .card.copied .hint { color: var(--accent); }
 
   /* ---------- create view ---------- */
   .create { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 88px); align-items: start; padding: 40px 0 80px; }
-  .create h1 {
-    font: 400 clamp(44px, 7vw, 84px)/.95 "Instrument Serif", serif; letter-spacing: -0.02em; margin: 0 0 18px;
-  }
+  .create h1 { font: 400 clamp(44px, 7vw, 84px)/.95 "Instrument Serif", serif; letter-spacing: -0.02em; margin: 0 0 18px; }
   .create h1 em { color: var(--accent); }
   .lede { color: var(--muted); max-width: 42ch; margin: 0 0 36px; }
   form { display: grid; gap: 18px; }
   .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
-  label span.opt { color: #5f5c54; }
+  label, .field { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+  .opt { color: var(--faint); }
   input, textarea {
     width: 100%; background: var(--ink-2); color: var(--paper);
     border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
@@ -111,32 +117,105 @@
   textarea { min-height: 110px; resize: vertical; }
   input.mono { font-family: "Geist Mono", monospace; letter-spacing: .05em; text-transform: uppercase; }
   .err { color: var(--danger); font-size: 13px; min-height: 1em; margin: -6px 0 0; }
-  .preview { position: sticky; top: 32px; display: grid; gap: 20px; justify-items: start; }
-  .preview .note {
-    font: italic 400 22px/1.35 "Instrument Serif", serif; color: var(--paper); max-width: 34ch;
-    white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.35em;
+
+  /* game search */
+  .combo { position: relative; }
+  .combo .picked { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font: 500 10px/1 "Geist Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); pointer-events: none; }
+  .combo input.has-pick { padding-right: 90px; }
+  .listbox {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; margin: 0; padding: 6px; list-style: none;
+    background: #1a1b16; border: 1px solid #34352d; border-radius: 12px; max-height: 340px; overflow: auto;
+    box-shadow: 0 24px 50px -20px rgba(0,0,0,.9);
+    animation: drop .14s ease-out;
   }
-  .preview .note:empty::before { content: "Your note shows here."; color: #5f5c54; }
+  @keyframes drop { from { opacity: 0; transform: translateY(-4px); } }
+  .listbox li { display: flex; align-items: center; gap: 12px; padding: 7px 8px; border-radius: 8px; color: var(--paper); font-size: 14px; cursor: pointer; }
+  .listbox li img { width: 92px; height: 35px; object-fit: cover; border-radius: 4px; background: #24251f; flex: none; }
+  .listbox li[aria-selected="true"], .listbox li:hover { background: #26271f; }
+  .listbox li.empty { color: var(--muted); cursor: default; background: none; }
+
+  .preview { position: sticky; top: 32px; display: grid; gap: 20px; justify-items: start; }
+  .preview .note { font: italic 400 22px/1.35 "Instrument Serif", serif; color: var(--paper); max-width: 34ch; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.35em; margin: 0; }
+  .preview .note:empty::before { content: "Your note shows here."; color: var(--faint); }
   .result { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--ink-2); width: 100%; max-width: 460px; }
   .result output { font: 400 13px/1.4 "Geist Mono", monospace; color: var(--muted); overflow-wrap: anywhere; max-height: 4.2em; overflow: hidden; }
   .result .acts { display: flex; flex-wrap: wrap; gap: 10px; }
-  .fine { font-size: 13px; color: #6d6a61; max-width: 46ch; }
+  .fine { font-size: 13px; color: #6d6a61; max-width: 46ch; margin: 0; }
 
   /* ---------- gift view ---------- */
-  .gift { min-height: calc(100dvh - 80px); display: grid; place-items: center; padding: 24px 0 64px; }
-  .stage { width: 100%; max-width: 640px; display: grid; gap: 28px; justify-items: center; text-align: center; }
+  .gift { min-height: calc(100dvh - 80px); display: grid; place-items: center; padding: 8px 0 48px; }
+  .stage { width: 100%; max-width: 640px; display: grid; gap: 22px; justify-items: center; text-align: center; }
   .eyebrow { font: 500 12px/1 "Geist Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-  .gift h1 { font: 400 clamp(40px, 8vw, 76px)/1 "Instrument Serif", serif; letter-spacing: -0.02em; margin: 0; overflow-wrap: anywhere; }
+  .gift h1 { font: 400 clamp(34px, 6.5vw, 58px)/1 "Instrument Serif", serif; letter-spacing: -0.02em; margin: 0; overflow-wrap: anywhere; }
   .gift h1 em { color: var(--accent); }
-  .gift .note {
-    font: italic 400 clamp(20px, 3.4vw, 26px)/1.4 "Instrument Serif", serif;
-    max-width: 36ch; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere;
-  }
-  .gift .sig { color: var(--muted); margin-top: -14px; }
+  .gift .note { font: italic 400 clamp(20px, 3.4vw, 26px)/1.4 "Instrument Serif", serif; max-width: 36ch; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .gift .sig { color: var(--muted); margin: -12px 0 0; }
   .gift .acts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-  .gift .card { margin: 8px auto 0; }
+  .gift .card { margin: 6px auto 0; }
+
+  /* ---------- the pack ---------- */
+  .pack {
+    --tear: 15%;
+    position: relative; width: min(300px, 74vw, calc((100dvh - 290px) * .66)); min-width: 200px; aspect-ratio: .66;
+    cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    filter: drop-shadow(0 30px 40px rgba(0,0,0,.6));
+    animation: bob 4s ease-in-out infinite;
+  }
+  .pack:active { cursor: grabbing; }
+  .pack.tearing, .pack.done { animation: none; }
+  @keyframes bob { 50% { transform: translateY(-6px) rotate(.4deg); } }
+  .pack .layer { position: absolute; inset: 0; will-change: transform; }
+  .pack .top { z-index: 4; }
+  .pack .body { z-index: 3; }
+  .pack .inside { /* light spilling out of the tear */
+    position: absolute; left: -10%; right: -10%; top: calc(var(--tear) - 10%); height: 20%; z-index: 1; opacity: 0;
+    background: radial-gradient(closest-side, rgba(255,214,150,.95), rgba(255,181,71,.45) 45%, transparent);
+    filter: blur(4px);
+  }
+  .pack .peek { position: absolute; left: 8%; width: 84%; top: 20%; z-index: 2; border-radius: 10px; overflow: hidden; aspect-ratio: 1.586; background: #1b1c17; box-shadow: inset 0 0 0 1px #45463c; }
+  .pack .peek img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pack .peek .band { position: absolute; left: 0; right: 0; top: 38%; height: 18%; background: var(--accent); }
+  .face {
+    position: absolute; inset: 0; overflow: hidden;
+    background: linear-gradient(160deg, #2a2a24, #121310 60%, #1c1c17);
+  }
+  .face .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .face .foil { /* metallic sheen sweeping across */
+    position: absolute; inset: -50%; mix-blend-mode: overlay; pointer-events: none;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 3px),
+      linear-gradient(115deg, transparent 40%, rgba(255,255,255,.55) 48%, rgba(255,230,180,.25) 52%, transparent 60%);
+    animation: sweep 3.6s ease-in-out infinite;
+  }
+  @keyframes sweep { from { transform: translateX(-30%); } to { transform: translateX(30%); } }
+  .face .edge { position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), inset 0 0 40px rgba(0,0,0,.5); }
+  .face .label {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 50px 18px 22px; text-align: left; display: grid; gap: 4px;
+    background: linear-gradient(to top, rgba(10,10,8,.95), rgba(10,10,8,.7) 55%, transparent);
+  }
+  .face .label b { font: 400 26px/1.02 "Instrument Serif", serif; letter-spacing: -0.01em; color: var(--paper); overflow-wrap: anywhere; }
+  .face .label span { font-size: 12px; color: #bdb7aa; }
+  .face .label .brand { display: block; margin-bottom: 6px; }
+  .face .label .brand span { font: 500 10px/1 "Geist Mono", monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); padding: 5px 8px; border-radius: 4px; }
+  .face .perf { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .face .perf polyline { fill: none; stroke: rgba(255,255,255,.55); stroke-width: 1.2; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+  .swipe-hint {
+    position: absolute; left: 0; right: 0; top: calc(var(--tear) + 1.5%); z-index: 5; display: flex; justify-content: center; pointer-events: none;
+    font: 500 11px/1 "Geist Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--paper);
+    transition: opacity .2s;
+  }
+  .swipe-hint span { background: rgba(10,10,8,.7); padding: 6px 10px; border-radius: 999px; backdrop-filter: blur(6px); display: inline-flex; gap: 8px; align-items: center; }
+  .swipe-hint i { display: inline-block; width: 26px; height: 2px; background: var(--accent); position: relative; overflow: hidden; border-radius: 2px; }
+  .swipe-hint i::after { content: ""; position: absolute; inset: 0; background: #fff; transform: translateX(-100%); animation: slide 1.4s ease-in-out infinite; }
+  @keyframes slide { to { transform: translateX(100%); } }
+  .pack.tearing .swipe-hint, .pack.done .swipe-hint { opacity: 0; }
+  .pack.nudge { animation: nudge .5s ease; }
+  @keyframes nudge { 20% { transform: translateX(-6px) rotate(-1deg); } 50% { transform: translateX(6px) rotate(1deg); } 80% { transform: translateX(-3px); } }
+  .rip-help { display: grid; gap: 8px; justify-items: center; }
+  .rip-help p { margin: 0; color: var(--muted); font-size: 14px; }
+
   .toast {
-    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0;
+    position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; z-index: 50;
     background: var(--paper); color: var(--ink); padding: 10px 16px; border-radius: 999px;
     font-size: 14px; font-weight: 500; transition: opacity .2s, transform .2s; pointer-events: none;
   }
@@ -145,6 +224,8 @@
   /* entrance */
   [data-enter] { animation: enter .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 90ms); }
   @keyframes enter { from { opacity: 0; transform: translateY(14px); } }
+  .card-land { animation: land .7s cubic-bezier(.2,.9,.25,1.15) both; }
+  @keyframes land { from { opacity: 0; transform: perspective(900px) translateY(-40px) scale(.85) rotateX(18deg); } }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -155,8 +236,9 @@
   }
   @media (max-width: 480px) {
     .pair { grid-template-columns: 1fr; }
-    .card { padding: 20px; border-radius: 16px; }
+    .card { padding: 18px 20px; border-radius: 16px; }
     .btn { width: 100%; }
+    .top small { display: none; }
   }
 </style>
 </head>
@@ -171,18 +253,24 @@
     <main id="create" class="create" hidden>
       <section>
         <h1 data-enter>Send a game,<br><em>with a note.</em></h1>
-        <p class="lede" data-enter style="--i:1">Paste a Steam key, write something to your friend, and send them the link. When they open it they see your message and the key on a card. One tap copies it, one more redeems it on Steam.</p>
+        <p class="lede" data-enter style="--i:1">Paste a Steam key, write something to your friend, and send them the link. They get a sealed pack to rip open, with your note and the key inside. One tap copies it, one more redeems it on Steam.</p>
 
-        <form id="form" novalidate data-enter style="--i:2">
+        <form id="form" novalidate data-enter style="--i:2" autocomplete="off">
           <div class="pair">
-            <label>To <input name="to" maxlength="40" placeholder="Sam" autocomplete="off"></label>
-            <label>From <input name="from" maxlength="40" placeholder="You" autocomplete="off" required></label>
+            <label>To <input name="to" maxlength="40" placeholder="Sam"></label>
+            <label>From <input name="from" maxlength="40" placeholder="You" required></label>
           </div>
-          <label><span>Game <span class="opt">(optional)</span></span>
-            <input name="game" maxlength="60" placeholder="Outer Wilds" autocomplete="off">
-          </label>
+          <div class="field">
+            <label for="game" style="display:block">Game <span class="opt" id="gameOpt">(optional, start typing to search)</span></label>
+            <div class="combo">
+              <input id="game" name="game" maxlength="80" placeholder="Outer Wilds"
+                     role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="gameList">
+              <span class="picked" id="picked" hidden>Art added</span>
+              <ul class="listbox" id="gameList" role="listbox" aria-label="Games" hidden></ul>
+            </div>
+          </div>
           <label>Steam key
-            <input name="key" class="mono" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false" required>
+            <input name="key" class="mono" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX" spellcheck="false" required>
           </label>
           <label>Message
             <textarea name="msg" maxlength="600" placeholder="Happy birthday. Clear your weekend."></textarea>
@@ -193,15 +281,11 @@
       </section>
 
       <aside class="preview" aria-label="Preview">
-        <div class="card" id="pcard" data-enter style="--i:2">
-          <div class="row"><span class="game" id="pgame">A game for you</span><span class="label">Steam key</span></div>
-          <div></div>
-          <div class="row"><span class="code" id="pcode">XXXXX-XXXXX-XXXXX</span></div>
-        </div>
+        <div class="card" id="pcard" data-enter style="--i:2"></div>
         <p class="note" id="pnote" data-enter style="--i:3"></p>
 
         <div class="result" id="result" hidden>
-          <span class="label" style="font:500 11px/1 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Your link</span>
+          <span class="mono-label">Your link</span>
           <output id="link"></output>
           <div class="acts">
             <button class="btn" type="button" id="copylink">Copy link</button>
@@ -216,27 +300,37 @@
     <!-- ===================== gift ===================== -->
     <main id="gift" class="gift" hidden>
       <div class="stage">
-        <!-- closed -->
+        <!-- sealed pack -->
         <div id="closed" class="stage">
           <span class="eyebrow" data-enter>A gift for <span id="gto"></span></span>
-          <h1 data-enter style="--i:1"><span id="gfrom1"></span> sent you<br><em>a game.</em></h1>
-          <div data-enter style="--i:2"><button class="btn" id="open" type="button">Open it</button></div>
+          <h1 data-enter style="--i:1"><span id="gfrom"></span> sent you <em>a game.</em></h1>
+
+          <div class="pack" id="pack" tabindex="0" role="button" aria-label="Rip open the pack">
+            <div class="inside" id="inside"></div>
+            <div class="peek" id="peek"><img alt="" hidden><i class="band"></i></div>
+            <div class="layer body" id="pbody"></div>
+            <div class="layer top" id="ptop"></div>
+            <div class="swipe-hint"><span><i></i>Swipe to rip</span></div>
+          </div>
+
+          <div class="rip-help" data-enter style="--i:3">
+            <p>Swipe across the top of the pack to rip it open.</p>
+            <button class="linkish" id="autoopen" type="button">Open without swiping</button>
+          </div>
         </div>
+
         <!-- opened -->
         <div id="opened" class="stage" hidden>
           <p class="note" id="gnote" data-enter></p>
           <p class="sig" id="gsig" data-enter style="--i:1"></p>
-          <button class="card" id="gcard" type="button" data-enter style="--i:2" aria-label="Copy Steam key">
-            <div class="row"><span class="game" id="ggame"></span><span class="label">Steam key</span></div>
-            <div></div>
-            <div class="row"><span class="code" id="gcode"></span><span class="hint" id="ghint">Tap to copy</span></div>
-          </button>
-          <div class="acts" data-enter style="--i:3">
+          <button class="card card-land" id="gcard" type="button" aria-label="Copy Steam key"></button>
+          <div class="acts" data-enter style="--i:4">
             <a class="btn" id="redeem" target="_blank" rel="noopener noreferrer">Redeem on Steam</a>
             <a class="btn ghost" href="./">Send one back</a>
           </div>
-          <p class="fine" data-enter style="--i:4">Redeem opens Steam's key page with the key filled in. Sign in, accept the agreement and press Continue.</p>
+          <p class="fine" data-enter style="--i:5">Redeem opens Steam's key page with the key filled in. Sign in, accept the agreement and press Continue.</p>
         </div>
+
         <!-- broken -->
         <div id="broken" class="stage" hidden>
           <h1>This link is <em>incomplete.</em></h1>
@@ -249,9 +343,34 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <!-- one card, used by the preview and the gift -->
+  <template id="cardTpl">
+    <img class="art" alt="" hidden>
+    <i class="band"></i>
+    <i class="scrim"></i>
+    <div class="row"><span class="game"></span><span class="label">Steam key</span></div>
+    <div class="row"><span class="code"></span><span class="hint"></span></div>
+    <i class="holo"></i>
+  </template>
+
+  <!-- the pack's printed face, drawn into both halves so the tear lines up -->
+  <template id="faceTpl">
+    <div class="face">
+      <img class="poster" alt="" hidden>
+      <i class="foil"></i>
+      <div class="label"><span class="brand"><span>Keycard · Steam key</span></span><b class="pgame"></b><span class="pfrom"></span></div>
+      <svg class="perf" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline></polyline></svg>
+      <i class="edge"></i>
+    </div>
+  </template>
+
+<script src="config.js"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
+  const API = String(window.KEYCARD_API || "").replace(/\/+$/, "");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
   // ---- link encoding: UTF-8 JSON -> base64url, in the hash ----
   const enc = (obj) => {
@@ -265,10 +384,12 @@
     return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
   };
 
-  // Steam keys: 3 or 5 groups of 5 (A-Z, 0-9). Normalise spaces and lowercase.
+  // Steam keys: 3 or 5 groups of 5 (A-Z, 0-9).
   const normKey = (k) => k.toUpperCase().replace(/[^A-Z0-9-]/g, "");
   const validKey = (k) => /^[A-Z0-9]{5}(-[A-Z0-9]{5}){2}((-[A-Z0-9]{5}){2})?$/.test(k);
   const redeemUrl = (k) => "https://store.steampowered.com/account/registerkey?key=" + encodeURIComponent(k);
+  // Art only ever loads from SteamGridDB or Steam's CDN, whatever a link says.
+  const safeImg = (u) => (typeof u === "string" && /^https:\/\/([a-z0-9-]+\.)*(steamgriddb\.com|steamstatic\.com)\/[^\s"'<>\\]*$/i.test(u) ? u : "");
 
   const toast = (msg) => {
     const t = $("toast"); t.textContent = msg; t.classList.add("show");
@@ -284,16 +405,44 @@
       ta.remove(); return ok;
     }
   };
-  const sheen = (el) => el.addEventListener("pointermove", (e) => {
-    const r = el.getBoundingClientRect();
-    el.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
-    el.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
-  });
+  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch {} };
+
+  // ---- card ----
+  const makeCard = (el) => { el.appendChild($("cardTpl").content.cloneNode(true)); return el; };
+  const setCard = (el, { game, code, art, hint }) => {
+    el.querySelector(".game").textContent = game;
+    el.querySelector(".code").textContent = code;
+    el.querySelector(".hint").textContent = hint || "";
+    const img = el.querySelector(".art");
+    const src = safeImg(art);
+    if (!src) { img.hidden = true; img.removeAttribute("src"); el.classList.remove("has-art"); return; }
+    if (img.getAttribute("src") !== src) {
+      img.onload = () => { img.hidden = false; el.classList.add("has-art"); };
+      img.onerror = () => { img.hidden = true; el.classList.remove("has-art"); };
+      img.src = src;
+    }
+  };
+  // Tilt and light that follow the pointer.
+  const tilt = (el, strength = 1) => {
+    el.addEventListener("pointermove", (e) => {
+      const r = el.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      el.style.setProperty("--mx", px * 100 + "%");
+      el.style.setProperty("--my", py * 100 + "%");
+      if (reduced) return;
+      el.style.setProperty("--rx", (0.5 - py) * 14 * strength + "deg");
+      el.style.setProperty("--ry", (px - 0.5) * 18 * strength + "deg");
+    });
+    el.addEventListener("pointerleave", () => { el.style.setProperty("--rx", "0deg"); el.style.setProperty("--ry", "0deg"); });
+  };
 
   const hash = new URLSearchParams(location.hash.slice(1)).get("g");
+  addEventListener("hashchange", () => location.reload());
+
+  if (hash !== null) gift(hash); else create();
 
   // ===================== gift view =====================
-  if (hash !== null) {
+  function gift(hash) {
     $("gift").hidden = false;
     $("topnote").textContent = "";
     let g;
@@ -306,63 +455,306 @@
     }
     const from = String(g.f || "A friend").slice(0, 40);
     const to = String(g.t || "you").slice(0, 40);
+    const game = String(g.n || "").slice(0, 80);
+    const art = safeImg(g.a), poster = safeImg(g.p) || art;
+
     document.title = from + " sent you a game";
     $("gto").textContent = to;
-    $("gfrom1").textContent = from;
+    $("gfrom").textContent = from;
     $("gnote").textContent = String(g.m || "Enjoy this one.").slice(0, 600);
     $("gsig").textContent = "— " + from;
-    $("ggame").textContent = String(g.n || "A game for you").slice(0, 60);
-    $("gcode").textContent = g.k;
     $("redeem").href = redeemUrl(g.k);
 
-    $("open").addEventListener("click", () => {
-      $("closed").hidden = true; $("opened").hidden = false; $("gcard").focus({ preventScroll: true });
-    });
-    const card = $("gcard"); sheen(card);
+    const card = makeCard($("gcard"));
+    setCard(card, { game: game || "A game for you", code: g.k, art, hint: "Tap to copy" });
+    tilt(card);
     card.addEventListener("click", async () => {
       const ok = await copy(g.k);
       card.classList.toggle("copied", ok);
-      $("ghint").textContent = ok ? "Copied" : "Select and copy";
+      card.querySelector(".hint").textContent = ok ? "Copied" : "Select and copy";
       toast(ok ? "Key copied" : "Couldn't copy, select it by hand");
-      if (ok) setTimeout(() => { card.classList.remove("copied"); $("ghint").textContent = "Tap to copy"; }, 2200);
+      buzz(ok ? 15 : 0);
+      if (ok) setTimeout(() => { card.classList.remove("copied"); card.querySelector(".hint").textContent = "Tap to copy"; }, 2200);
     });
-    return;
+
+    buildPack({ game: game || "A game", from: "from " + from, poster, art });
+  }
+
+  // ---- the pack: two halves of one printed face, split along a jagged tear ----
+  function buildPack({ game, from, poster, art }) {
+    const pack = $("pack"), top = $("ptop"), body = $("pbody"), inside = $("inside"), peek = $("peek");
+
+    // Tear line and crimped edges, in % of the pack. Seeded so both halves match.
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const TEAR = 15;
+    const tear = [];
+    for (let x = 0; x <= 100; x += 4) tear.push([x, TEAR + (rnd() - 0.5) * 2.6]);
+    const crimp = (y0, y1, rev) => {
+      const pts = [];
+      for (let i = 0, x = 0; x <= 100; x += 2.5, i++) pts.push([x, i % 2 ? y1 : y0]);
+      return rev ? pts.reverse() : pts;
+    };
+    const poly = (pts) => "polygon(" + pts.map(([x, y]) => `${x.toFixed(2)}% ${y.toFixed(2)}%`).join(",") + ")";
+    top.style.clipPath = poly([...crimp(0, 1.8), ...tear.slice().reverse()]);
+    body.style.clipPath = poly([...tear, ...crimp(100, 98.2, true)]);
+
+    for (const layer of [top, body]) {
+      layer.appendChild($("faceTpl").content.cloneNode(true));
+      layer.querySelector(".pgame").textContent = game;
+      layer.querySelector(".pfrom").textContent = from;
+      layer.querySelector(".perf polyline").setAttribute("points", tear.map(([x, y]) => `${x},${y}`).join(" "));
+      if (poster) {
+        const img = layer.querySelector(".poster");
+        img.onload = () => (img.hidden = false);
+        img.src = poster;
+      }
+    }
+    if (art) { const pi = peek.querySelector("img"); pi.onload = () => { pi.hidden = false; peek.querySelector(".band").hidden = true; }; pi.src = art; }
+
+    // ---- sound: filtered noise that follows swipe speed ----
+    const sound = (() => {
+      let ctx, src, gain, filt;
+      return {
+        start() {
+          try {
+            ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === "suspended") ctx.resume();
+            if (src) return;
+            const len = ctx.sampleRate;
+            const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (Math.random() < 0.25 ? 1 : 0.3);
+            src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+            filt = ctx.createBiquadFilter(); filt.type = "bandpass"; filt.frequency.value = 2200; filt.Q.value = 0.7;
+            gain = ctx.createGain(); gain.gain.value = 0;
+            src.connect(filt).connect(gain).connect(ctx.destination); src.start();
+          } catch { src = null; }
+        },
+        level(v) {
+          if (!src) return;
+          gain.gain.setTargetAtTime(clamp(v, 0, 1) * 0.28, ctx.currentTime, 0.015);
+          filt.frequency.setTargetAtTime(1600 + clamp(v, 0, 1) * 3000, ctx.currentTime, 0.02);
+        },
+        stop() {
+          if (!src) return;
+          const s = src; src = null;
+          gain.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+          setTimeout(() => { try { s.stop(); } catch {} }, 250);
+        },
+      };
+    })();
+
+    let p = 0, dir = 1, done = false, drag = null, lastTick = 0;
+    const setP = (v) => {
+      p = clamp(v, 0, 1);
+      // The torn end lifts while the far end holds, so the gap opens from where the swipe started.
+      top.style.transformOrigin = dir > 0 ? "100% 15%" : "0% 15%";
+      top.style.transform = `translateY(${-p * 6}px) rotate(${dir * p * 9}deg)`;
+      inside.style.opacity = String(p * 0.9);
+      const tick = Math.floor(p * 12);
+      if (tick !== lastTick) { lastTick = tick; buzz(4); }
+    };
+
+    const finish = () => {
+      if (done) return;
+      done = true; drag = null;
+      pack.classList.add("done");
+      pack.classList.remove("tearing");
+      sound.level(1); setTimeout(() => sound.stop(), 120);
+      buzz([20, 40, 30]);
+      const reveal = () => { $("closed").hidden = true; $("opened").hidden = false; $("gcard").focus({ preventScroll: true }); };
+      if (reduced) return reveal();
+
+      const from = top.style.transform || "none";
+      top.animate([{ transform: from, opacity: 1 }, { transform: `translate(${dir * 140}%, -60%) rotate(${dir * 32}deg)`, opacity: 0 }],
+        { duration: 560, easing: "cubic-bezier(.3,.1,.6,1)", fill: "forwards" });
+      inside.animate([{ opacity: inside.style.opacity || 0 }, { opacity: 1, transform: "scaleY(1.6)" }, { opacity: 0 }],
+        { duration: 1300, easing: "ease-out", fill: "forwards" });
+      pack.animate([{ transform: "rotate(0)" }, { transform: "rotate(-1.5deg) translateY(3px)" }, { transform: "rotate(1deg)" }, { transform: "rotate(0)" }],
+        { duration: 300, delay: 120 });
+      peek.animate([{ transform: "translateY(0)" }, { transform: "translateY(-118%)" }],
+        { duration: 700, delay: 340, easing: "cubic-bezier(.2,.9,.25,1.2)", fill: "forwards" });
+      body.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(45%) rotate(-3deg)", opacity: 0 }],
+        { duration: 520, delay: 1050, easing: "cubic-bezier(.5,0,.8,.6)", fill: "forwards" });
+      peek.animate([{ transform: "translateY(-118%)", opacity: 1 }, { transform: "translateY(-80%) scale(1.15)", opacity: 0 }],
+        { duration: 420, delay: 1250, easing: "ease-in", fill: "forwards" });
+      setTimeout(reveal, 1600);
+    };
+
+    const springBack = () => {
+      const from = p;
+      const t0 = performance.now();
+      const step = (t) => {
+        const k = clamp((t - t0) / 260, 0, 1);
+        setP(from * (1 - (1 - Math.pow(1 - k, 3))));
+        if (k < 1 && !drag && !done) requestAnimationFrame(step);
+        else if (!drag && !done) pack.classList.remove("tearing");
+      };
+      requestAnimationFrame(step);
+    };
+
+    pack.addEventListener("pointerdown", (e) => {
+      if (done || (e.pointerType === "mouse" && e.button !== 0)) return;
+      drag = { x: e.clientX, y: e.clientY, lx: e.clientX, lt: performance.now(), v: 0, moved: false, id: e.pointerId };
+      sound.start();
+    });
+    pack.addEventListener("pointermove", (e) => {
+      if (!drag || done || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        if (Math.abs(dy) > Math.abs(dx)) { drag = null; sound.stop(); return; } // a scroll, not a rip
+        drag.moved = true; dir = Math.sign(dx) || 1;
+        pack.classList.add("tearing");
+        try { pack.setPointerCapture(e.pointerId); } catch {}
+      }
+      const now = performance.now();
+      const v = Math.abs(e.clientX - drag.lx) / Math.max(1, now - drag.lt); // px per ms
+      drag.v = drag.v * 0.6 + v * 0.4; drag.lx = e.clientX; drag.lt = now;
+      sound.level(drag.v / 1.5);
+      setP((dx * dir) / (pack.offsetWidth * 0.8));
+      if (p >= 1) finish();
+    });
+    const release = () => {
+      if (!drag || done) return;
+      const { moved, v } = drag;
+      drag = null;
+      sound.stop();
+      if (!moved) { pack.classList.add("nudge"); setTimeout(() => pack.classList.remove("nudge"), 500); return; }
+      if (p > 0.6 || (p > 0.3 && v > 1.1)) finish(); else springBack();
+    };
+    pack.addEventListener("pointerup", release);
+    pack.addEventListener("pointercancel", release);
+
+    // Keyboard and "open without swiping": play the same rip.
+    const autoRip = () => {
+      if (done) return;
+      dir = 1; pack.classList.add("tearing"); sound.start();
+      const t0 = performance.now();
+      const step = (t) => {
+        const k = clamp((t - t0) / 480, 0, 1);
+        setP(k * k); sound.level(0.4 + k * 0.6);
+        if (k < 1) requestAnimationFrame(step); else finish();
+      };
+      requestAnimationFrame(step);
+    };
+    pack.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); autoRip(); } });
+    $("autoopen").addEventListener("click", autoRip);
   }
 
   // ===================== create view =====================
-  $("create").hidden = false;
-  const f = $("form");
-  sheen($("pcard"));
-  const render = () => {
-    $("pgame").textContent = f.game.value.trim() || "A game for you";
-    $("pcode").textContent = normKey(f.key.value) || "XXXXX-XXXXX-XXXXX";
-    $("pnote").textContent = f.msg.value.trim();
-    $("result").hidden = true;
-  };
-  f.addEventListener("input", render);
+  function create() {
+    $("create").hidden = false;
+    const f = $("form");
+    const pcard = makeCard($("pcard"));
+    tilt(pcard, 0.5);
+    let picked = null; // { id, name, card, pack }
 
-  f.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const key = normKey(f.key.value);
-    const err = $("err");
-    if (!f.from.value.trim()) { err.textContent = "Add your name so they know who it's from."; f.from.focus(); return; }
-    if (!validKey(key)) { err.textContent = "That doesn't look like a Steam key. It should be like ABCDE-FGHIJ-KLMNO."; f.key.focus(); return; }
-    err.textContent = "";
-    const data = { f: f.from.value.trim(), t: f.to.value.trim(), n: f.game.value.trim(), m: f.msg.value.trim(), k: key };
-    const url = location.origin + location.pathname + "#g=" + enc(data);
-    $("link").textContent = url;
-    $("openlink").href = url;
-    $("result").hidden = false;
-    $("copylink").onclick = async () => toast((await copy(url)) ? "Link copied" : "Couldn't copy, select it by hand");
-    if (navigator.share) {
-      $("sharelink").hidden = false;
-      $("sharelink").onclick = () => navigator.share({ title: "A game for you", url }).catch(() => {});
-    }
-    $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
-  });
+    const render = () => {
+      setCard(pcard, {
+        game: f.game.value.trim() || "A game for you",
+        code: normKey(f.key.value) || "XXXXX-XXXXX-XXXXX",
+        art: picked && picked.card,
+      });
+      $("pnote").textContent = f.msg.value.trim();
+      $("picked").hidden = !(picked && picked.card);
+      f.game.classList.toggle("has-pick", !!(picked && picked.card));
+      $("result").hidden = true;
+    };
+    f.addEventListener("input", render);
+    render();
 
-  // reload into the right view if someone edits the hash by hand
-  addEventListener("hashchange", () => location.reload());
+    // ---- game search (needs the worker; without it the field is plain text) ----
+    const input = f.game, list = $("gameList");
+    if (!API) $("gameOpt").textContent = "(optional)";
+    let results = [], active = -1, timer, ctl;
+    const close = () => { list.hidden = true; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); active = -1; };
+    const highlight = (i) => {
+      active = i;
+      [...list.children].forEach((li, j) => li.setAttribute("aria-selected", String(j === i)));
+      if (i >= 0 && list.children[i]) { input.setAttribute("aria-activedescendant", list.children[i].id); list.children[i].scrollIntoView({ block: "nearest" }); }
+    };
+    const show = () => {
+      list.replaceChildren();
+      if (!results.length) {
+        const li = document.createElement("li"); li.className = "empty"; li.textContent = "No games found. You can still type a name.";
+        list.appendChild(li);
+      }
+      results.forEach((gm, i) => {
+        const li = document.createElement("li");
+        li.id = "game-opt-" + i; li.setAttribute("role", "option"); li.setAttribute("aria-selected", "false");
+        const img = document.createElement("img"); img.alt = ""; img.loading = "lazy";
+        const src = safeImg(gm.img); if (src) img.src = src;
+        const name = document.createElement("span"); name.textContent = gm.name;
+        li.append(img, name);
+        li.addEventListener("pointerdown", (e) => { e.preventDefault(); choose(i); });
+        list.appendChild(li);
+      });
+      list.hidden = false; input.setAttribute("aria-expanded", "true"); active = -1;
+    };
+    const search = async (q) => {
+      if (ctl) ctl.abort();
+      ctl = new AbortController();
+      try {
+        const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { signal: ctl.signal });
+        if (!r.ok) throw new Error(r.status);
+        const data = await r.json();
+        results = Array.isArray(data) ? data.filter((x) => x && Number.isInteger(x.id) && typeof x.name === "string") : [];
+        if (document.activeElement === input) show();
+      } catch (e) { if (e.name !== "AbortError") close(); }
+    };
+    const choose = async (i) => {
+      const gm = results[i]; if (!gm) return;
+      input.value = gm.name; close();
+      picked = { id: gm.id, name: gm.name };
+      render();
+      try {
+        const r = await fetch(`${API}/art?appid=${gm.id}`);
+        const art = r.ok ? await r.json() : {};
+        if (!picked || picked.id !== gm.id) return; // they picked something else meanwhile
+        picked.card = safeImg(art.card); picked.pack = safeImg(art.pack);
+        render();
+      } catch {}
+    };
+    input.addEventListener("input", () => {
+      picked = null; // typed by hand: no art
+      if (!API) return;
+      clearTimeout(timer);
+      const q = input.value.trim();
+      if (q.length < 2) { if (ctl) ctl.abort(); return close(); }
+      timer = setTimeout(() => search(q), 180);
+    });
+    input.addEventListener("keydown", (e) => {
+      if (list.hidden || !results.length) { if (e.key === "Escape") close(); return; }
+      if (e.key === "ArrowDown") { e.preventDefault(); highlight((active + 1) % results.length); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); highlight((active - 1 + results.length) % results.length); }
+      else if (e.key === "Enter" && active >= 0) { e.preventDefault(); choose(active); }
+      else if (e.key === "Escape") close();
+    });
+    input.addEventListener("blur", () => setTimeout(close, 100));
+
+    f.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const key = normKey(f.key.value);
+      const err = $("err");
+      if (!f.from.value.trim()) { err.textContent = "Add your name so they know who it's from."; f.from.focus(); return; }
+      if (!validKey(key)) { err.textContent = "That doesn't look like a Steam key. It should be like ABCDE-FGHIJ-KLMNO."; f.key.focus(); return; }
+      err.textContent = "";
+      const data = { f: f.from.value.trim(), t: f.to.value.trim(), n: f.game.value.trim(), m: f.msg.value.trim(), k: key };
+      if (picked && picked.card) data.a = picked.card;
+      if (picked && picked.pack) data.p = picked.pack;
+      const url = location.origin + location.pathname + "#g=" + enc(data);
+      $("link").textContent = url;
+      $("openlink").href = url;
+      $("result").hidden = false;
+      $("copylink").onclick = async () => toast((await copy(url)) ? "Link copied" : "Couldn't copy, select it by hand");
+      if (navigator.share) {
+        $("sharelink").hidden = false;
+        $("sharelink").onclick = () => navigator.share({ title: "A game for you", url }).catch(() => {});
+      }
+      $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
 })();
 </script>
 </body>
