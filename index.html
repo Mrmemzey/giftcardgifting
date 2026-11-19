@@ -153,65 +153,98 @@
   .gift .acts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
   .gift .card { margin: 6px auto 0; }
 
+  /* ---------- gift scene ---------- */
+  #stars { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+  body.gifting { background: #07080a; }
+
   /* ---------- the pack ---------- */
-  .pack {
-    --tear: 15%;
-    position: relative; width: min(300px, 74vw, calc((100dvh - 290px) * .66)); min-width: 200px; aspect-ratio: .66;
-    cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
-    filter: drop-shadow(0 30px 40px rgba(0,0,0,.6));
-    animation: bob 4s ease-in-out infinite;
+  .pack-wrap { position: relative; display: grid; place-items: center; padding: 10px 0 44px; }
+  .pack-wrap .halo {
+    position: absolute; left: 50%; top: 40%; width: 170%; aspect-ratio: 1; transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, rgba(255,140,40,.28), rgba(255,120,30,.08) 55%, transparent);
+    pointer-events: none; animation: breathe 3.2s ease-in-out infinite;
   }
+  @keyframes breathe { 50% { opacity: .65; transform: translate(-50%, -50%) scale(.94); } }
+  .sparks { position: absolute; left: -45%; top: -35%; width: 190%; height: 150%; pointer-events: none; z-index: 6; }
+  .pack {
+    --tear: 13%;
+    position: relative; width: min(290px, 70vw, calc((100dvh - 300px) * .64)); min-width: 190px; aspect-ratio: .64;
+    cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-box-reflect: below 12px linear-gradient(transparent 84%, rgba(255,255,255,.14));
+    animation: float 5s ease-in-out infinite;
+  }
+  .pack:focus-visible { outline-offset: 8px; border-radius: 6px; }
   .pack:active { cursor: grabbing; }
   .pack.tearing, .pack.done { animation: none; }
-  @keyframes bob { 50% { transform: translateY(-6px) rotate(.4deg); } }
-  .pack .layer { position: absolute; inset: 0; will-change: transform; }
-  .pack .top { z-index: 4; }
-  .pack .body { z-index: 3; }
-  .pack .inside { /* light spilling out of the tear */
-    position: absolute; left: -10%; right: -10%; top: calc(var(--tear) - 10%); height: 20%; z-index: 1; opacity: 0;
-    background: radial-gradient(closest-side, rgba(255,214,150,.95), rgba(255,181,71,.45) 45%, transparent);
-    filter: blur(4px);
+  @keyframes float { 50% { transform: translateY(-8px); } }
+  .pack .glow { position: absolute; left: -6%; right: -6%; height: 9%; z-index: 0; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,170,60,.95), rgba(255,120,20,.4) 60%, transparent); filter: blur(10px); }
+  .pack .glow.t { top: -3%; }
+  .pack .glow.b { bottom: -3%; }
+  .pack .layer { position: absolute; inset: 0; }
+  .pack .body { z-index: 3; will-change: transform, opacity; }
+  .pack .top { z-index: 5; perspective: 650px; transform-style: preserve-3d; will-change: transform, opacity; }
+  .pack .slice { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; backface-visibility: visible; }
+  .pack .slice .shade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+  .pack .slice .spec { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: linear-gradient(to top, rgba(255,230,190,.0), rgba(255,230,190,.55) 60%, rgba(255,255,255,.0)); mix-blend-mode: screen; }
+  .pack .sheen { /* one foil sweep over the whole sealed pack */
+    position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; mix-blend-mode: overlay; transition: opacity .2s;
   }
-  .pack .peek { position: absolute; left: 8%; width: 84%; top: 20%; z-index: 2; border-radius: 10px; overflow: hidden; aspect-ratio: 1.586; background: #1b1c17; box-shadow: inset 0 0 0 1px #45463c; }
-  .pack .peek img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .pack .peek .band { position: absolute; left: 0; right: 0; top: 38%; height: 18%; background: var(--accent); }
-  .face {
-    position: absolute; inset: 0; overflow: hidden;
-    background: linear-gradient(160deg, #2a2a24, #121310 60%, #1c1c17);
-  }
-  .face .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .face .foil { /* metallic sheen sweeping across */
-    position: absolute; inset: -50%; mix-blend-mode: overlay; pointer-events: none;
+  .pack .sheen::before {
+    content: ""; position: absolute; inset: -40% -60%;
     background:
       repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 3px),
-      linear-gradient(115deg, transparent 40%, rgba(255,255,255,.55) 48%, rgba(255,230,180,.25) 52%, transparent 60%);
-    animation: sweep 3.6s ease-in-out infinite;
+      linear-gradient(115deg, transparent 42%, rgba(255,255,255,.6) 49%, rgba(255,220,170,.3) 52%, transparent 58%);
+    animation: sweep 3.8s ease-in-out infinite;
   }
-  @keyframes sweep { from { transform: translateX(-30%); } to { transform: translateX(30%); } }
-  .face .edge { position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), inset 0 0 40px rgba(0,0,0,.5); }
+  @keyframes sweep { from { transform: translateX(-28%); } to { transform: translateX(28%); } }
+  .pack.tearing .sheen, .pack.done .sheen { opacity: 0; }
+  .pack .tearline { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; overflow: visible; pointer-events: none; opacity: 0;
+    filter: drop-shadow(0 0 2px #fff1d0) drop-shadow(0 0 6px #ffae3d) drop-shadow(0 0 14px #ff7a12); }
+  .pack .tearline polyline { fill: none; stroke: #fff6e2; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; stroke-dasharray: 100 100; stroke-dashoffset: 100; }
+  .pack .tearline polyline.wide { stroke: #ffa63a; stroke-width: 8; opacity: .4; }
+  .pack .hot { /* white-hot point where the tear is happening */
+    position: absolute; left: 0; top: 0; z-index: 6; width: 34%; aspect-ratio: 1; border-radius: 50%; pointer-events: none; opacity: 0;
+    background: radial-gradient(closest-side, #fff 0, rgba(255,240,210,.95) 14%, rgba(255,180,70,.65) 36%, rgba(255,120,20,.2) 64%, transparent);
+    mix-blend-mode: screen; will-change: transform, opacity; }
+  .pack .flash { position: absolute; left: -40%; right: -40%; top: calc(var(--tear) - 22%); height: 44%; z-index: 7; pointer-events: none; opacity: 0;
+    background: radial-gradient(closest-side, #fff, rgba(255,214,150,.9) 25%, rgba(255,140,40,.35) 55%, transparent); mix-blend-mode: screen; }
+  .pack .peek { position: absolute; left: 50%; top: 21%; z-index: 2; will-change: transform; }
+  .pack .peek .card { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; transition: none; box-shadow: 0 0 0 1px #45463c, 0 0 40px rgba(255,170,70,.35); }
+  .face { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(160deg, #24252a, #101114 55%, #191a1f); }
+  .face .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .face .crimp { position: absolute; left: 0; right: 0; height: 5.5%;
+    background:
+      linear-gradient(to bottom, rgba(255,255,255,.55), rgba(255,255,255,0) 40%, rgba(0,0,0,.25)),
+      repeating-linear-gradient(90deg, #ffd08a 0 2px, #f08a2a 2px 4px);
+    box-shadow: 0 0 12px rgba(255,150,40,.8); }
+  .face .crimp.t { top: 0; }
+  .face .crimp.b { bottom: 0; }
+  .face .edge { position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), inset 0 0 50px rgba(0,0,0,.55); }
   .face .label {
-    position: absolute; left: 0; right: 0; bottom: 0; padding: 50px 18px 22px; text-align: left; display: grid; gap: 4px;
-    background: linear-gradient(to top, rgba(10,10,8,.95), rgba(10,10,8,.7) 55%, transparent);
+    position: absolute; left: 0; right: 0; bottom: 5.5%; padding: 48px 18px 18px; text-align: left; display: grid; gap: 4px;
+    background: linear-gradient(to top, rgba(8,8,10,.96), rgba(8,8,10,.72) 55%, transparent);
   }
   .face .label b { font: 400 26px/1.02 "Instrument Serif", serif; letter-spacing: -0.01em; color: var(--paper); overflow-wrap: anywhere; }
   .face .label span { font-size: 12px; color: #bdb7aa; }
-  .face .label .brand { display: block; margin-bottom: 6px; }
+  .face .label .brand { display: block; margin-bottom: 6px; white-space: nowrap; }
   .face .label .brand span { font: 500 10px/1 "Geist Mono", monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); padding: 5px 8px; border-radius: 4px; }
   .face .perf { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-  .face .perf polyline { fill: none; stroke: rgba(255,255,255,.55); stroke-width: 1.2; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+  .face .perf polyline { fill: none; stroke: rgba(255,255,255,.5); stroke-width: 1.1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
   .swipe-hint {
-    position: absolute; left: 0; right: 0; top: calc(var(--tear) + 1.5%); z-index: 5; display: flex; justify-content: center; pointer-events: none;
+    position: absolute; left: 0; right: 0; top: calc(var(--tear) + 2%); z-index: 8; display: flex; justify-content: center; pointer-events: none;
     font: 500 11px/1 "Geist Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--paper);
     transition: opacity .2s;
   }
-  .swipe-hint span { background: rgba(10,10,8,.7); padding: 6px 10px; border-radius: 999px; backdrop-filter: blur(6px); display: inline-flex; gap: 8px; align-items: center; }
+  .swipe-hint span { background: rgba(8,8,10,.72); padding: 6px 10px; border-radius: 999px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: inline-flex; gap: 8px; align-items: center; }
   .swipe-hint i { display: inline-block; width: 26px; height: 2px; background: var(--accent); position: relative; overflow: hidden; border-radius: 2px; }
   .swipe-hint i::after { content: ""; position: absolute; inset: 0; background: #fff; transform: translateX(-100%); animation: slide 1.4s ease-in-out infinite; }
   @keyframes slide { to { transform: translateX(100%); } }
   .pack.tearing .swipe-hint, .pack.done .swipe-hint { opacity: 0; }
-  .pack.nudge { animation: nudge .5s ease; }
-  @keyframes nudge { 20% { transform: translateX(-6px) rotate(-1deg); } 50% { transform: translateX(6px) rotate(1deg); } 80% { transform: translateX(-3px); } }
-  .rip-help { display: grid; gap: 8px; justify-items: center; }
+  .pack.nudge { animation: nudge .45s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes nudge { 30% { transform: translateX(-5px) rotate(-1.2deg); } 65% { transform: translateX(4px) rotate(.8deg); } }
+  .rip-help { display: grid; gap: 8px; justify-items: center; margin-top: -8px; }
   .rip-help p { margin: 0; color: var(--muted); font-size: 14px; }
 
   .toast {
@@ -224,8 +257,6 @@
   /* entrance */
   [data-enter] { animation: enter .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 90ms); }
   @keyframes enter { from { opacity: 0; transform: translateY(14px); } }
-  .card-land { animation: land .7s cubic-bezier(.2,.9,.25,1.15) both; }
-  @keyframes land { from { opacity: 0; transform: perspective(900px) translateY(-40px) scale(.85) rotateX(18deg); } }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -305,12 +336,20 @@
           <span class="eyebrow" data-enter>A gift for <span id="gto"></span></span>
           <h1 data-enter style="--i:1"><span id="gfrom"></span> sent you <em>a game.</em></h1>
 
-          <div class="pack" id="pack" tabindex="0" role="button" aria-label="Rip open the pack">
-            <div class="inside" id="inside"></div>
-            <div class="peek" id="peek"><img alt="" hidden><i class="band"></i></div>
-            <div class="layer body" id="pbody"></div>
-            <div class="layer top" id="ptop"></div>
-            <div class="swipe-hint"><span><i></i>Swipe to rip</span></div>
+          <div class="pack-wrap" data-enter style="--i:2">
+            <i class="halo" id="halo"></i>
+            <div class="pack" id="pack" tabindex="0" role="button" aria-label="Rip open the pack">
+              <i class="glow t" id="glowTop"></i><i class="glow b"></i>
+              <div class="peek" id="peek"></div>
+              <div class="layer body" id="pbody"></div>
+              <svg class="tearline" id="tearline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline class="wide" pathLength="100"></polyline><polyline class="core" pathLength="100"></polyline></svg>
+              <div class="layer top" id="ptop"></div>
+              <i class="hot" id="hot"></i>
+              <div class="sheen" id="sheen"></div>
+              <div class="flash" id="flash"></div>
+              <div class="swipe-hint"><span><i></i>Swipe to rip</span></div>
+            </div>
+            <canvas class="sparks" id="sparks" aria-hidden="true"></canvas>
           </div>
 
           <div class="rip-help" data-enter style="--i:3">
@@ -321,14 +360,14 @@
 
         <!-- opened -->
         <div id="opened" class="stage" hidden>
-          <p class="note" id="gnote" data-enter></p>
-          <p class="sig" id="gsig" data-enter style="--i:1"></p>
-          <button class="card card-land" id="gcard" type="button" aria-label="Copy Steam key"></button>
-          <div class="acts" data-enter style="--i:4">
+          <p class="note" id="gnote" data-enter style="--i:3"></p>
+          <p class="sig" id="gsig" data-enter style="--i:4"></p>
+          <button class="card" id="gcard" type="button" aria-label="Copy Steam key"></button>
+          <div class="acts" data-enter style="--i:6">
             <a class="btn" id="redeem" target="_blank" rel="noopener noreferrer">Redeem on Steam</a>
             <a class="btn ghost" href="./">Send one back</a>
           </div>
-          <p class="fine" data-enter style="--i:5">Redeem opens Steam's key page with the key filled in. Sign in, accept the agreement and press Continue.</p>
+          <p class="fine" data-enter style="--i:7">Redeem opens Steam's key page with the key filled in. Sign in, accept the agreement and press Continue.</p>
         </div>
 
         <!-- broken -->
@@ -353,16 +392,18 @@
     <i class="holo"></i>
   </template>
 
-  <!-- the pack's printed face, drawn into both halves so the tear lines up -->
+  <!-- the pack's printed face, drawn into every piece so the tear lines up -->
   <template id="faceTpl">
     <div class="face">
       <img class="poster" alt="" hidden>
-      <i class="foil"></i>
+      <i class="crimp t"></i><i class="crimp b"></i>
       <div class="label"><span class="brand"><span>Keycard · Steam key</span></span><b class="pgame"></b><span class="pfrom"></span></div>
       <svg class="perf" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline></polyline></svg>
       <i class="edge"></i>
     </div>
   </template>
+
+  <canvas id="stars" aria-hidden="true" hidden></canvas>
 
 <script src="config.js"></script>
 <script>
@@ -405,7 +446,11 @@
       ta.remove(); return ok;
     }
   };
-  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch {} };
+  const buzz = (ms) => {
+    const ua = navigator.userActivation; // browsers refuse vibration before the first real tap
+    if (!navigator.vibrate || (ua && !ua.hasBeenActive)) return;
+    try { navigator.vibrate(ms); } catch {}
+  };
 
   // ---- card ----
   const makeCard = (el) => { el.appendChild($("cardTpl").content.cloneNode(true)); return el; };
@@ -445,6 +490,8 @@
   function gift(hash) {
     $("gift").hidden = false;
     $("topnote").textContent = "";
+    document.body.classList.add("gifting");
+    drawStars();
     let g;
     try {
       g = dec(hash);
@@ -473,126 +520,329 @@
       card.classList.toggle("copied", ok);
       card.querySelector(".hint").textContent = ok ? "Copied" : "Select and copy";
       toast(ok ? "Key copied" : "Couldn't copy, select it by hand");
-      buzz(ok ? 15 : 0);
+      if (ok) buzz(15);
       if (ok) setTimeout(() => { card.classList.remove("copied"); card.querySelector(".hint").textContent = "Tap to copy"; }, 2200);
     });
 
-    buildPack({ game: game || "A game", from: "from " + from, poster, art });
+    buildPack({ game: game || "A game", from: "from " + from, poster, card });
   }
 
-  // ---- the pack: two halves of one printed face, split along a jagged tear ----
-  function buildPack({ game, from, poster, art }) {
-    const pack = $("pack"), top = $("ptop"), body = $("pbody"), inside = $("inside"), peek = $("peek");
-
-    // Tear line and crimped edges, in % of the pack. Seeded so both halves match.
-    let seed = 7;
-    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    const TEAR = 15;
-    const tear = [];
-    for (let x = 0; x <= 100; x += 4) tear.push([x, TEAR + (rnd() - 0.5) * 2.6]);
-    const crimp = (y0, y1, rev) => {
-      const pts = [];
-      for (let i = 0, x = 0; x <= 100; x += 2.5, i++) pts.push([x, i % 2 ? y1 : y0]);
-      return rev ? pts.reverse() : pts;
+  // A still starfield with a warm glow behind the pack.
+  function drawStars() {
+    const c = $("stars"); c.hidden = false;
+    const draw = () => {
+      const dpr = Math.min(2, devicePixelRatio || 1), w = innerWidth, h = innerHeight;
+      c.width = w * dpr; c.height = h * dpr;
+      const x = c.getContext("2d"); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const neb = x.createRadialGradient(w / 2, h * 0.5, 0, w / 2, h * 0.5, Math.max(w, h) * 0.6);
+      neb.addColorStop(0, "rgba(255,120,30,.11)"); neb.addColorStop(0.5, "rgba(70,60,130,.05)"); neb.addColorStop(1, "rgba(0,0,0,0)");
+      x.fillStyle = neb; x.fillRect(0, 0, w, h);
+      let s = 11; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+      const n = Math.round((w * h) / 4500);
+      for (let i = 0; i < n; i++) {
+        const big = r() < 0.07;
+        x.globalAlpha = 0.2 + r() * 0.7;
+        x.fillStyle = r() < 0.15 ? "#ffd9a8" : "#dfe6ff";
+        x.beginPath(); x.arc(r() * w, r() * h, big ? 1.5 : 0.3 + r() * 0.8, 0, 7); x.fill();
+      }
     };
-    const poly = (pts) => "polygon(" + pts.map(([x, y]) => `${x.toFixed(2)}% ${y.toFixed(2)}%`).join(",") + ")";
-    top.style.clipPath = poly([...crimp(0, 1.8), ...tear.slice().reverse()]);
-    body.style.clipPath = poly([...tear, ...crimp(100, 98.2, true)]);
+    draw(); addEventListener("resize", draw);
+  }
 
-    for (const layer of [top, body]) {
-      layer.appendChild($("faceTpl").content.cloneNode(true));
-      layer.querySelector(".pgame").textContent = game;
-      layer.querySelector(".pfrom").textContent = from;
-      layer.querySelector(".perf polyline").setAttribute("points", tear.map(([x, y]) => `${x},${y}`).join(" "));
+  // ---- the pack ----
+  // The strip above the tear is cut into thin vertical slices. As the finger moves, slices behind
+  // the tear front fold back in 3D, so the strip curls away like foil. Everything eases toward the
+  // finger every frame, which keeps touch input smooth.
+  function buildPack({ game, from, poster, card }) {
+    const pack = $("pack"), top = $("ptop"), body = $("pbody"), peek = $("peek");
+    const flash = $("flash"), glowTop = $("glowTop"), line = $("tearline"), wide = line.querySelector(".wide"), core = line.querySelector(".core"), hot = $("hot");
+    const canvas = $("sparks"), ctx2d = canvas.getContext("2d");
+
+    // ---- geometry, in % of the pack ----
+    const N = 14, TEAR = 13;
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const tearPts = [];
+    for (let i = 0; i <= N * 2; i++) tearPts.push([(i * 50) / N, TEAR + (rnd() - 0.5) * 2.4]);
+    const tearY = (x) => {
+      const f = clamp(x / (50 / N), 0, N * 2), a = Math.floor(f), b = Math.min(N * 2, a + 1), t = f - a;
+      return tearPts[a][1] * (1 - t) + tearPts[b][1] * t;
+    };
+    const tooth = (x) => (Math.round(x / 2.5) % 2 ? 1.6 : 0);
+    const poly = (pts) => "polygon(" + pts.map(([x, y]) => `${x.toFixed(2)}% ${y.toFixed(2)}%`).join(",") + ")";
+    const edge = (x0, x1, y) => { const p = []; for (let x = x0; x < x1; x += 1.25) p.push([x, y(x)]); p.push([x1, y(x1)]); return p; };
+    const ptsAttr = (pts) => pts.map(([x, y]) => `${x},${y}`).join(" ");
+
+    const addFace = (el) => {
+      el.appendChild($("faceTpl").content.cloneNode(true));
+      const f = el.querySelector(".face");
+      f.querySelector(".pgame").textContent = game;
+      f.querySelector(".pfrom").textContent = from;
+      f.querySelector(".perf polyline").setAttribute("points", ptsAttr(tearPts));
       if (poster) {
-        const img = layer.querySelector(".poster");
+        const img = f.querySelector(".poster");
+        img.draggable = false;
         img.onload = () => (img.hidden = false);
         img.src = poster;
       }
-    }
-    if (art) { const pi = peek.querySelector("img"); pi.onload = () => { pi.hidden = false; peek.querySelector(".band").hidden = true; }; pi.src = art; }
+    };
 
-    // ---- sound: filtered noise that follows swipe speed ----
+    // body: everything below the tear
+    body.style.clipPath = poly([...tearPts, ...edge(0, 100, (x) => 100 - tooth(x)).reverse()]);
+    addFace(body);
+    // sheen covers the whole sealed pack
+    $("sheen").style.clipPath = poly([...edge(0, 100, tooth), ...edge(0, 100, (x) => 100 - tooth(x)).reverse()]);
+
+    // strip: N slices, each a column of the strip
+    const slices = [];
+    for (let k = 0; k < N; k++) {
+      const x0 = Math.max(0, (k * 100) / N - 0.3), x1 = Math.min(100, ((k + 1) * 100) / N + 0.3); // slight overlap hides seams
+      const inner = tearPts.filter(([x]) => x > x0 && x < x1).reverse();
+      const el = document.createElement("div");
+      el.className = "slice";
+      el.style.clipPath = poly([...edge(x0, x1, tooth), [x1, tearY(x1)], ...inner, [x0, tearY(x0)]]);
+      const xc = ((k + 0.5) * 100) / N;
+      el.style.transformOrigin = `${xc}% ${TEAR}%`;
+      addFace(el);
+      const shade = document.createElement("i"); shade.className = "shade";
+      const spec = document.createElement("i"); spec.className = "spec";
+      el.append(shade, spec);
+      top.appendChild(el);
+      slices.push({ el, xc, shade, spec, on: false });
+    }
+
+    // the card waiting inside: a scaled copy of the real one, so it can fly into place seamlessly
+    let peekCard = null, riseBy = 0;
+    const layoutPeek = () => {
+      const pw = pack.offsetWidth * 0.86, ph = pw / 1.586;
+      const cw = Math.min(460, $("closed").clientWidth || 460);
+      peekCard = card.cloneNode(true);
+      peekCard.removeAttribute("id"); peekCard.setAttribute("aria-hidden", "true"); peekCard.tabIndex = -1;
+      peekCard.style.width = cw + "px";
+      peekCard.style.transform = `scale(${pw / cw})`;
+      peek.replaceChildren(peekCard);
+      peek.style.width = pw + "px"; peek.style.height = ph + "px";
+      peek.style.transform = "translate(-50%, 0)";
+      const H = pack.offsetHeight;
+      riseBy = 0.21 * H + ph - 0.25 * H; // rise until only its bottom edge is still in the pack
+    };
+    layoutPeek();
+    addEventListener("resize", () => { if (!done) layoutPeek(); });
+
+    // ---- sound: noise that follows the swipe, a thump on the rip, a chime as the card rises ----
     const sound = (() => {
-      let ctx, src, gain, filt;
+      let ac, src, gain, filt;
+      const tone = (f, at, peak, len, type = "sine", to) => {
+        const o = ac.createOscillator(), g2 = ac.createGain();
+        o.type = type; o.frequency.setValueAtTime(f, at);
+        if (to) o.frequency.exponentialRampToValueAtTime(to, at + len * 0.8);
+        g2.gain.setValueAtTime(0.0001, at);
+        g2.gain.exponentialRampToValueAtTime(peak, at + 0.012);
+        g2.gain.exponentialRampToValueAtTime(0.0001, at + len);
+        o.connect(g2).connect(ac.destination); o.start(at); o.stop(at + len + 0.05);
+      };
       return {
         start() {
           try {
-            ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-            if (ctx.state === "suspended") ctx.resume();
+            ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+            if (ac.state === "suspended") ac.resume();
             if (src) return;
-            const len = ctx.sampleRate;
-            const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
-            for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (Math.random() < 0.25 ? 1 : 0.3);
-            src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
-            filt = ctx.createBiquadFilter(); filt.type = "bandpass"; filt.frequency.value = 2200; filt.Q.value = 0.7;
-            gain = ctx.createGain(); gain.gain.value = 0;
-            src.connect(filt).connect(gain).connect(ctx.destination); src.start();
+            const len = ac.sampleRate, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (Math.random() < 0.22 ? 1 : 0.28);
+            src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+            filt = ac.createBiquadFilter(); filt.type = "bandpass"; filt.frequency.value = 2200; filt.Q.value = 0.7;
+            gain = ac.createGain(); gain.gain.value = 0;
+            src.connect(filt).connect(gain).connect(ac.destination); src.start();
           } catch { src = null; }
         },
         level(v) {
           if (!src) return;
-          gain.gain.setTargetAtTime(clamp(v, 0, 1) * 0.28, ctx.currentTime, 0.015);
-          filt.frequency.setTargetAtTime(1600 + clamp(v, 0, 1) * 3000, ctx.currentTime, 0.02);
+          gain.gain.setTargetAtTime(clamp(v, 0, 1) * 0.26, ac.currentTime, 0.015);
+          filt.frequency.setTargetAtTime(1500 + clamp(v, 0, 1) * 3200, ac.currentTime, 0.02);
         },
         stop() {
           if (!src) return;
           const s = src; src = null;
-          gain.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+          gain.gain.setTargetAtTime(0, ac.currentTime, 0.03);
           setTimeout(() => { try { s.stop(); } catch {} }, 250);
         },
+        rip() {
+          this.start(); this.level(1); setTimeout(() => this.stop(), 150);
+          try { tone(170, ac.currentTime, 0.5, 0.34, "sine", 42); } catch {}
+        },
+        chime() {
+          try { const t = ac.currentTime; [1046.5, 1568, 2093].forEach((f, i) => tone(f, t + i * 0.07, 0.09 / (i + 1), 1.1)); } catch {}
+        },
+        land() { try { tone(220, ac.currentTime, 0.18, 0.18, "sine", 110); } catch {} },
       };
     })();
 
-    let p = 0, dir = 1, done = false, drag = null, lastTick = 0;
-    const setP = (v) => {
-      p = clamp(v, 0, 1);
-      // The torn end lifts while the far end holds, so the gap opens from where the swipe started.
-      top.style.transformOrigin = dir > 0 ? "100% 15%" : "0% 15%";
-      top.style.transform = `translateY(${-p * 6}px) rotate(${dir * p * 9}deg)`;
-      inside.style.opacity = String(p * 0.9);
-      const tick = Math.floor(p * 12);
-      if (tick !== lastTick) { lastTick = tick; buzz(4); }
+    // ---- sparks ----
+    const parts = [];
+    let cw = 0, ch = 0;
+    const fitCanvas = () => {
+      const r = canvas.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+      cw = r.width; ch = r.height;
+      canvas.width = cw * dpr; canvas.height = ch * dpr;
+      ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    const at = (xPct) => {
+      const pr = pack.getBoundingClientRect(), cr = canvas.getBoundingClientRect();
+      return [pr.left - cr.left + (xPct / 100) * pr.width, pr.top - cr.top + (tearY(xPct) / 100) * pr.height];
+    };
+    const spawn = (n, [x, y], burst) => {
+      for (let i = 0; i < n; i++) {
+        let vx, vy;
+        if (burst) { const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.6, sp = 2 + Math.random() * 6; vx = Math.cos(a) * sp; vy = Math.sin(a) * sp; }
+        else { vx = -dir * (0.4 + Math.random() * 2.4) + (Math.random() - 0.5) * 1.4; vy = -(0.6 + Math.random() * 3); }
+        parts.push({ x, y, vx, vy, life: 0, max: 22 + Math.random() * (burst ? 40 : 28), w: 0.6 + Math.random() * 1.3 });
+      }
+    };
+    const stepSparks = () => {
+      if (!cw) fitCanvas();
+      ctx2d.clearRect(0, 0, cw, ch);
+      if (!parts.length) return;
+      ctx2d.globalCompositeOperation = "lighter";
+      ctx2d.lineCap = "round";
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.vy += 0.13; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.life++;
+        const t = 1 - p.life / p.max;
+        if (t <= 0) { parts.splice(i, 1); continue; }
+        ctx2d.strokeStyle = `hsla(${28 + 22 * t}, 100%, ${58 + 38 * t}%, ${t})`;
+        ctx2d.lineWidth = p.w;
+        ctx2d.beginPath(); ctx2d.moveTo(p.x - p.vx * 2.2, p.y - p.vy * 2.2); ctx2d.lineTo(p.x, p.y); ctx2d.stroke();
+      }
     };
 
-    const finish = () => {
+    // ---- the tear ----
+    let target = 0, cur = 0, dir = 1, done = false, drag = null, emit = 0, raf = 0, lastTick = 0;
+    let heat = 0, heatT = 0; // how hard the tear is glowing, driven by swipe speed
+    let W = 1, H = 1, HS = 1;
+    const frontPct = () => cur * 104 - 2; // tear front, in % from the side the swipe started on
+    const toProgress = (front) => (front + 2) / 104;
+
+    const render = () => {
+      const front = frontPct();
+      for (const s of slices) {
+        const d = front - (dir > 0 ? s.xc : 100 - s.xc); // how far behind the front this slice is
+        if (d <= -3) {
+          if (s.on) { s.el.style.transform = ""; s.shade.style.opacity = "0"; s.spec.style.opacity = "0"; s.on = false; }
+          continue;
+        }
+        const k = clamp((d + 3) / 30, 0, 1), e = k * k * (3 - 2 * k);
+        const a = e * 68; // leans back, still visible as a bent flap
+        s.el.style.transform = `translate3d(0, ${(-e * 14).toFixed(2)}px, 0) rotateX(${a.toFixed(2)}deg) rotateZ(${(-dir * e * 5).toFixed(2)}deg)`;
+        s.shade.style.opacity = (e * 0.55).toFixed(3);
+        s.spec.style.opacity = (Math.sin(clamp(a / 70, 0, 1) * Math.PI) * 0.8).toFixed(3);
+        s.on = true;
+      }
+      // the tear line: drawn up to the front, brighter and wider the faster you rip
+      line.style.opacity = clamp(cur * 6, 0, 1).toFixed(3);
+      const off = String(100 - clamp(front + 1, 0, 100));
+      wide.style.strokeDashoffset = off; core.style.strokeDashoffset = off;
+      wide.style.opacity = clamp(0.6 + heat * 0.4, 0, 1).toFixed(3);
+      wide.style.strokeWidth = (9 + heat * 14).toFixed(1);
+      core.style.strokeWidth = (2.8 + heat * 2.6).toFixed(2);
+      // the hot point sits exactly where the tear is happening
+      if (!done && cur > 0.004 && front < 100) {
+        const fx = dir > 0 ? clamp(front, 0, 100) : 100 - clamp(front, 0, 100);
+        hot.style.opacity = clamp(0.85 + heat * 0.15, 0, 1).toFixed(3);
+        hot.style.transform = `translate(${((fx / 100) * W - HS / 2).toFixed(1)}px, ${((tearY(fx) / 100) * H - HS / 2).toFixed(1)}px) scale(${(0.85 + heat * 0.9).toFixed(3)})`;
+      } else hot.style.opacity = "0";
+      glowTop.style.opacity = (1 - clamp(cur * 1.4, 0, 1)).toFixed(3);
+    };
+
+    const loop = () => {
+      raf = 0;
+      cur += (target - cur) * (done ? 0.3 : drag ? 0.55 : 0.22); // tight to the finger, soft when let go
+      heat += (heatT - heat) * 0.25; heatT *= drag ? 0.9 : 0.85;
+      if (Math.abs(target - cur) < 0.0008) cur = target;
+      render();
+      const tick = Math.floor(cur * 14);
+      if (tick !== lastTick && !done) { lastTick = tick; buzz(5); }
+      const f = frontPct();
+      if (emit > 0.03 && f > 0 && f < 100) spawn(Math.round(Math.random() + emit * 4), at(dir > 0 ? f : 100 - f));
+      emit *= 0.86;
+      stepSparks();
+      if (!drag && !done && cur === 0 && target === 0) pack.classList.remove("tearing");
+      if (cur !== target || parts.length || drag || emit > 0.03 || heat > 0.02) raf = requestAnimationFrame(loop);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
+
+    const begin = (d) => {
+      dir = d;
+      const pts = ptsAttr(dir > 0 ? tearPts : tearPts.slice().reverse());
+      wide.setAttribute("points", pts); core.setAttribute("points", pts);
+      W = pack.offsetWidth; H = pack.offsetHeight; HS = hot.offsetWidth;
+      pack.classList.add("tearing");
+      fitCanvas();
+    };
+
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const fadeOut = (el, ms = 380) => el && el.animate([{ opacity: getComputedStyle(el).opacity }, { opacity: 0 }], { duration: ms, easing: "ease-out", fill: "forwards" });
+
+    const finish = async () => {
       if (done) return;
       done = true; drag = null;
       pack.classList.add("done");
-      pack.classList.remove("tearing");
-      sound.level(1); setTimeout(() => sound.stop(), 120);
-      buzz([20, 40, 30]);
-      const reveal = () => { $("closed").hidden = true; $("opened").hidden = false; $("gcard").focus({ preventScroll: true }); };
-      if (reduced) return reveal();
+      if (reduced) { sound.stop(); return reveal(null); }
+      layoutPeek(); // pick up the card art if it finished loading after the pack was built
+      target = 1.1; emit = 0; heat = heatT = 1.5; kick();
+      sound.rip(); buzz([14, 30, 26]);
 
-      const from = top.style.transform || "none";
-      top.animate([{ transform: from, opacity: 1 }, { transform: `translate(${dir * 140}%, -60%) rotate(${dir * 32}deg)`, opacity: 0 }],
-        { duration: 560, easing: "cubic-bezier(.3,.1,.6,1)", fill: "forwards" });
-      inside.animate([{ opacity: inside.style.opacity || 0 }, { opacity: 1, transform: "scaleY(1.6)" }, { opacity: 0 }],
-        { duration: 1300, easing: "ease-out", fill: "forwards" });
-      pack.animate([{ transform: "rotate(0)" }, { transform: "rotate(-1.5deg) translateY(3px)" }, { transform: "rotate(1deg)" }, { transform: "rotate(0)" }],
-        { duration: 300, delay: 120 });
-      peek.animate([{ transform: "translateY(0)" }, { transform: "translateY(-118%)" }],
-        { duration: 700, delay: 340, easing: "cubic-bezier(.2,.9,.25,1.2)", fill: "forwards" });
-      body.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(45%) rotate(-3deg)", opacity: 0 }],
-        { duration: 520, delay: 1050, easing: "cubic-bezier(.5,0,.8,.6)", fill: "forwards" });
-      peek.animate([{ transform: "translateY(-118%)", opacity: 1 }, { transform: "translateY(-80%) scale(1.15)", opacity: 0 }],
-        { duration: 420, delay: 1250, easing: "ease-in", fill: "forwards" });
-      setTimeout(reveal, 1600);
+      // flash and a shower of sparks along the whole tear
+      flash.animate([{ opacity: 0, transform: "scale(.5)" }, { opacity: 1, transform: "scale(1)", offset: 0.15 }, { opacity: 0, transform: "scale(1.3)" }],
+        { duration: 700, easing: "ease-out", fill: "forwards" });
+      for (let x = 0; x <= 100; x += 8) spawn(5, at(x), true);
+      kick();
+
+      // the pack kicks down from the force, then settles
+      pack.animate([{ transform: "translateY(0) scale(1)" }, { transform: "translateY(8px) scale(.985)", offset: 0.25 }, { transform: "translateY(0) scale(1)" }],
+        { duration: 560, easing: "cubic-bezier(.3,1.4,.5,1)" });
+
+      await wait(110);
+      // the strip flies off the way it was torn
+      top.animate([{ transform: "none", opacity: 1 }, { transform: `translate3d(${dir * 26}%, -48%, 0) rotate(${dir * 16}deg)`, opacity: 0 }],
+        { duration: 640, easing: "cubic-bezier(.3,0,.2,1)", fill: "forwards" });
+      line.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 200, fill: "forwards" });
+
+      await wait(130);
+      // the card rises out
+      sound.chime();
+      peek.animate([{ transform: "translate(-50%, 0)" }, { transform: `translate(-50%, ${-riseBy}px)` }],
+        { duration: 860, easing: "cubic-bezier(.16,1.12,.3,1)", fill: "forwards" });
+
+      await wait(620);
+      // the empty pack falls away
+      body.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(16%) scale(.95)", opacity: 0 }],
+        { duration: 520, easing: "cubic-bezier(.55,0,.75,.45)", fill: "forwards" });
+      pack.querySelectorAll(".glow").forEach((el) => fadeOut(el, 300));
+      ["#closed .eyebrow", "#closed h1", "#closed .rip-help", "#halo"].forEach((q) => fadeOut(document.querySelector(q)));
+
+      await wait(420);
+      reveal(peekCard);
     };
 
-    const springBack = () => {
-      const from = p;
-      const t0 = performance.now();
-      const step = (t) => {
-        const k = clamp((t - t0) / 260, 0, 1);
-        setP(from * (1 - (1 - Math.pow(1 - k, 3))));
-        if (k < 1 && !drag && !done) requestAnimationFrame(step);
-        else if (!drag && !done) pack.classList.remove("tearing");
-      };
-      requestAnimationFrame(step);
+    // Swap to the opened view and fly the real card from where the copy is now.
+    const reveal = (fromEl) => {
+      const fr = fromEl && fromEl.getBoundingClientRect();
+      $("closed").hidden = true;
+      $("opened").hidden = false;
+      const gc = $("gcard");
+      if (fr) {
+        const r = gc.getBoundingClientRect();
+        gc.animate([
+          { transformOrigin: "0 0", transform: `translate(${fr.left - r.left}px, ${fr.top - r.top}px) scale(${fr.width / r.width})`,
+            boxShadow: "0 0 0 1px #45463c, 0 0 40px rgba(255,170,70,.35)" },
+          { transformOrigin: "0 0", transform: "translate(0px, 0px) scale(1)",
+            boxShadow: "inset 0 0 0 1px #34352d, 0 30px 60px -30px rgba(0,0,0,.8)" },
+        ], { duration: 780, easing: "cubic-bezier(.16,1,.3,1)" });
+        setTimeout(() => { sound.land(); buzz(10); }, 520);
+      }
+      gc.focus({ preventScroll: true });
     };
 
+    // ---- input ----
     pack.addEventListener("pointerdown", (e) => {
       if (done || (e.pointerType === "mouse" && e.button !== 0)) return;
       drag = { x: e.clientX, y: e.clientY, lx: e.clientX, lt: performance.now(), v: 0, moved: false, id: e.pointerId };
@@ -602,38 +852,47 @@
       if (!drag || done || e.pointerId !== drag.id) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       if (!drag.moved) {
-        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-        if (Math.abs(dy) > Math.abs(dx)) { drag = null; sound.stop(); return; } // a scroll, not a rip
-        drag.moved = true; dir = Math.sign(dx) || 1;
-        pack.classList.add("tearing");
+        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+        if (Math.abs(dy) > Math.abs(dx) * 1.2) { drag = null; sound.stop(); return; } // a scroll, not a rip
+        drag.moved = true;
+        begin(Math.sign(dx) || 1);
         try { pack.setPointerCapture(e.pointerId); } catch {}
       }
       const now = performance.now();
       const v = Math.abs(e.clientX - drag.lx) / Math.max(1, now - drag.lt); // px per ms
       drag.v = drag.v * 0.6 + v * 0.4; drag.lx = e.clientX; drag.lt = now;
-      sound.level(drag.v / 1.5);
-      setP((dx * dir) / (pack.offsetWidth * 0.8));
-      if (p >= 1) finish();
+      sound.level(drag.v / 1.4);
+      emit = clamp(drag.v, 0.15, 1.4);
+      heatT = Math.max(heatT, clamp(drag.v / 1.1, 0.3, 1.3));
+      // the tear front goes exactly where the pointer is
+      const pr = pack.getBoundingClientRect();
+      const xPct = ((e.clientX - pr.left) / pr.width) * 100;
+      target = clamp(toProgress(dir > 0 ? xPct : 100 - xPct), 0, 1);
+      kick();
+      if (target >= 0.95) finish();
     });
     const release = () => {
       if (!drag || done) return;
       const { moved, v } = drag;
       drag = null;
       sound.stop();
-      if (!moved) { pack.classList.add("nudge"); setTimeout(() => pack.classList.remove("nudge"), 500); return; }
-      if (p > 0.6 || (p > 0.3 && v > 1.1)) finish(); else springBack();
+      if (!moved) { pack.classList.remove("nudge"); void pack.offsetWidth; pack.classList.add("nudge"); setTimeout(() => pack.classList.remove("nudge"), 450); return; }
+      if (target > 0.55 || (target > 0.22 && v > 0.9)) finish();
+      else { target = 0; kick(); }
     };
     pack.addEventListener("pointerup", release);
     pack.addEventListener("pointercancel", release);
+    pack.addEventListener("lostpointercapture", release);
 
-    // Keyboard and "open without swiping": play the same rip.
+    // Keyboard and "Open without swiping" play the same rip.
     const autoRip = () => {
-      if (done) return;
-      dir = 1; pack.classList.add("tearing"); sound.start();
+      if (done || drag) return;
+      begin(1); sound.start();
       const t0 = performance.now();
       const step = (t) => {
-        const k = clamp((t - t0) / 480, 0, 1);
-        setP(k * k); sound.level(0.4 + k * 0.6);
+        if (done) return;
+        const k = clamp((t - t0) / 700, 0, 1);
+        target = k * k * (3 - 2 * k) * 0.95; emit = 0.9; heatT = 0.9; sound.level(0.35 + k * 0.5); kick();
         if (k < 1) requestAnimationFrame(step); else finish();
       };
       requestAnimationFrame(step);
